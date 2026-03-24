@@ -10,7 +10,7 @@ const firebaseConfig = {
   storageBucket: "dashboard-saylani.firebasestorage.app",
   messagingSenderId: "185516393618",
   appId: "1:185516393618:web:acec6a15904f9ef955924b",
-  measurementId: "G-SET6SVD7F5"
+  measurementId: "G-SET6SVD7F5",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -18,4 +18,5 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
 export default app;

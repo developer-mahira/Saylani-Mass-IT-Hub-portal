@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   Home, Search, FileText, Users, Bell, User, 
   LogOut, Menu, X 
@@ -68,10 +67,8 @@ export default function Sidebar({ unreadCount = 0 }) {
       </button>
 
       {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isOpen ? 0 : -300 }}
-        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40 lg:translate-x-0 lg:static ${
+      <aside
+        className={`fixed left-0 top-0 h-full w-64 bg-white border-r border-gray-200 z-40 transition-transform duration-300 lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -130,7 +127,7 @@ export default function Sidebar({ unreadCount = 0 }) {
             </button>
           </div>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Overlay */}
       {isOpen && (

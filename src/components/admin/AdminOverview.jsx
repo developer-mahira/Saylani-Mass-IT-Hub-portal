@@ -15,10 +15,7 @@ export default function AdminOverview() {
     volunteers: { total: 0, pending: 0, approved: 0 },
     users: { total: 0, students: 0, admins: 0 },
   });
-  const [loading, setLoading] = useState(true);
-
   useEffect(() => {
-    // Fetch real-time data from Firestore
     const unsubscribeComplaints = getAllComplaints((complaints) => {
       setStats(prev => ({
         ...prev,
@@ -52,7 +49,6 @@ export default function AdminOverview() {
       }));
     });
 
-    // Use realtime version for users
     const unsubscribeUsers = getAllUsersRealtime((users) => {
       setStats(prev => ({
         ...prev,
@@ -62,10 +58,8 @@ export default function AdminOverview() {
           admins: users.filter(u => u.role === "admin").length,
         }
       }));
-      setLoading(false);
     });
 
-    // Cleanup subscriptions
     return () => {
       if (unsubscribeComplaints && typeof unsubscribeComplaints === 'function') {
         unsubscribeComplaints();
@@ -112,14 +106,6 @@ export default function AdminOverview() {
       subtext: `${stats.users.students} students, ${stats.users.admins} admins`,
     },
   ];
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-10 h-10 border-4 border-[#0057a8] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

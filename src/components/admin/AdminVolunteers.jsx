@@ -7,13 +7,11 @@ const STATUS_OPTIONS = ["Pending", "Approved", "Rejected"];
 
 export default function AdminVolunteers() {
   const [volunteers, setVolunteers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const unsubscribe = getAllVolunteers((data) => {
       setVolunteers(data);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -39,14 +37,6 @@ export default function AdminVolunteers() {
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-[#66b032] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

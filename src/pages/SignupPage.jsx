@@ -1,4 +1,4 @@
- import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -7,18 +7,24 @@ import { signupUser } from "../firebase/auth";
 const CAMPUSES = [
   "Karachi - SITE", "Karachi - Korangi", "Karachi - Gulshan",
   "Lahore", "Islamabad", "Peshawar", "Quetta", "Multan",
-  "Faisalabad", "Rawalpindi", "Hyderabad", "Other"
+  "Faisalabad", "Rawalpindi", "Hyderabad", "Other",
 ];
 
 export default function SignupPage() {
   const [form, setForm] = useState({
-    name: "", email: "", password: "", confirmPassword: "",
-    role: "student", rollNumber: "", campus: "", phone: ""
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    role: "student",
+    rollNumber: "",
+    campus: "",
+    phone: "",
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const update = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
+  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
   const validate = () => {
     if (!form.name.trim()) return "Full name is required.";
@@ -36,9 +42,10 @@ export default function SignupPage() {
     if (error) return toast.error(error);
 
     setLoading(true);
+    const normalizedEmail = form.email.trim().toLowerCase();
     const result = await signupUser({
       name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: form.password,
       role: form.role,
       rollNumber: form.rollNumber.trim(),
@@ -48,15 +55,13 @@ export default function SignupPage() {
     setLoading(false);
 
     if (result.success) {
-      toast.success("Account created! Welcome to SMIT Hub 🎉");
-      
-      // Navigate based on role - AuthContext will handle the rest
-      // The ProtectedRoute will verify the role matches
-      if (form.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate("/login", {
+        replace: true,
+        state: {
+          accountCreated: true,
+          email: normalizedEmail,
+        },
+      });
     } else {
       toast.error(result.error);
     }
@@ -74,19 +79,16 @@ export default function SignupPage() {
           <p className="text-gray-500 text-sm">Join the SMIT Campus Portal</p>
         </div>
 
-        {/* Role Toggle */}
         <div className="flex bg-gray-100 rounded-xl p-1 mb-5">
-          {["student", "admin"].map(r => (
+          {["student", "admin"].map((role) => (
             <button
-              key={r}
-              onClick={() => update("role", r)}
+              key={role}
+              onClick={() => update("role", role)}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
-                form.role === r
-                  ? "bg-white text-[#0057a8] shadow"
-                  : "text-gray-500"
+                form.role === role ? "bg-white text-[#0057a8] shadow" : "text-gray-500"
               }`}
             >
-              {r === "student" ? "🎓 Student" : "⚙️ Admin"}
+              {role === "student" ? "Student" : "Admin"}
             </button>
           ))}
         </div>
@@ -95,8 +97,8 @@ export default function SignupPage() {
           {[
             { label: "Full Name *", field: "name", placeholder: "Ahmed Khan", type: "text" },
             { label: "Email Address *", field: "email", placeholder: "ahmed@gmail.com", type: "email" },
-            { label: "Password * (min 6 chars)", field: "password", placeholder: "••••••••", type: "password" },
-            { label: "Confirm Password *", field: "confirmPassword", placeholder: "••••••••", type: "password" },
+            { label: "Password * (min 6 chars)", field: "password", placeholder: "Enter password", type: "password" },
+            { label: "Confirm Password *", field: "confirmPassword", placeholder: "Confirm password", type: "password" },
             { label: "Phone Number", field: "phone", placeholder: "03001234567", type: "tel" },
           ].map(({ label, field, placeholder, type }) => (
             <div key={field}>
@@ -132,7 +134,11 @@ export default function SignupPage() {
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#66b032] text-sm bg-white"
             >
               <option value="">Select your campus</option>
-              {CAMPUSES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CAMPUSES.map((campus) => (
+                <option key={campus} value={campus}>
+                  {campus}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -142,15 +148,16 @@ export default function SignupPage() {
           disabled={loading}
           className="w-full mt-5 py-3 rounded-xl bg-[#66b032] hover:bg-[#4a9020] text-white font-bold text-base transition-all disabled:opacity-60 shadow-lg"
         >
-          {loading ? "Creating Account..." : "Create Account →"}
+          {loading ? "Creating Account..." : "Create Account"}
         </button>
 
         <p className="text-center text-sm text-gray-500 mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="text-[#0057a8] font-semibold hover:underline">Login</Link>
+          <Link to="/login" className="text-[#0057a8] font-semibold hover:underline">
+            Login
+          </Link>
         </p>
       </motion.div>
     </div>
   );
 }
-

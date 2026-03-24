@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { loginUser } from "../firebase/auth";
@@ -10,6 +10,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.state?.accountCreated) return;
+
+    toast.success("Account created successfully. Please log in.");
+    if (location.state.email) {
+      setEmail(location.state.email);
+    }
+
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const handleLogin = useCallback(async () => {
     if (!email.trim()) return toast.error("Please enter your email.");
@@ -21,14 +33,15 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result.success) {
-      toast.success("Welcome back! 👋");
-      
-      // Navigate based on the role returned from the login
-      // The ProtectedRoute will handle redirecting if needed
-      if (result.role === "admin") {
-        navigate("/admin");
+      const safeRole =
+        typeof result.role === "string" ? result.role.trim().toLowerCase() : "";
+
+      if (safeRole === "admin") {
+        toast.success("Welcome back!");
+        navigate("/admin", { replace: true });
       } else {
-        navigate("/dashboard");
+        toast.success("Welcome back!");
+        navigate("/dashboard", { replace: true });
       }
     } else {
       toast.error(result.error);
@@ -39,7 +52,7 @@ export default function LoginPage() {
     if (e.key === "Enter") handleLogin();
   };
 
-  const togglePassword = () => setShowPass(!showPass);
+  const togglePassword = () => setShowPass((prev) => !prev);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#f0f9e8] to-[#e8f3fd] px-4">
@@ -49,7 +62,6 @@ export default function LoginPage() {
         transition={{ duration: 0.4 }}
         className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md"
       >
-        {/* Logo */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 mb-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#66b032] to-[#0057a8] flex items-center justify-center text-white font-black text-sm">
@@ -64,7 +76,6 @@ export default function LoginPage() {
           <p className="text-gray-500 text-sm mt-1">Sign in to your campus portal</p>
         </div>
 
-        {/* Form */}
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -104,7 +115,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 rounded-xl bg-[#66b032] hover:bg-[#4a9020] text-white font-bold text-base transition-all disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
           >
-            {loading ? "Signing in..." : "Sign In →"}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </div>
 
@@ -118,4 +129,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

@@ -2,20 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { getAllComplaints, updateComplaintStatus } from "../../firebase/firestore";
-import { useAuth } from "../../context/AuthContext";
 
 const STATUS_OPTIONS = ["Submitted", "In Progress", "Resolved", "Closed"];
 
 export default function AdminComplaints() {
   const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
-  const { currentUser } = useAuth();
 
   useEffect(() => {
     const unsubscribe = getAllComplaints((data) => {
       setComplaints(data);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -42,14 +38,6 @@ export default function AdminComplaints() {
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-[#66b032] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

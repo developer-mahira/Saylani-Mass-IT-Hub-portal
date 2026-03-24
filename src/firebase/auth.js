@@ -3,30 +3,46 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  updatePassword,
-  EmailAuthProvider,
-  reauthenticateWithCredential,
 } from "firebase/auth";
 import { auth } from "./config";
 import { createUserDoc, getUserDoc } from "./firestore";
 
-// SIGNUP — works with ANY email format
+const AUTH_CACHE_KEY = "smit-hub-auth-cache";
+
+const normalizeRole = (role) => {
+  const safeRole = typeof role === "string" ? role.trim().toLowerCase() : "";
+  return safeRole === "admin" ? "admin" : "student";
+};
+
+const saveAuthCache = (profile) => {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(profile));
+};
+
+const clearAuthCache = () => {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(AUTH_CACHE_KEY);
+};
+
 export const signupUser = async ({ name, email, password, role, rollNumber, campus, phone }) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
+    const normalizedRole = normalizeRole(role);
 
-    // Save user data to Firestore
     await createUserDoc(user.uid, {
       name,
       email,
-      role,          // "student" or "admin"
+      role: normalizedRole,
       rollNumber: rollNumber || "",
       campus: campus || "",
       phone: phone || "",
       profilePhoto: "",
       isActive: true,
     });
+
+    clearAuthCache();
+    await signOut(auth);
 
     return { success: true, user };
   } catch (error) {
@@ -36,7 +52,6 @@ export const signupUser = async ({ name, email, password, role, rollNumber, camp
   }
 };
 
-// LOGIN — works with ANY valid email, role detected from Firestore
 export const loginUser = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -44,31 +59,50 @@ export const loginUser = async (email, password) => {
 
     if (!userDoc) {
       await signOut(auth);
+      clearAuthCache();
       return { success: false, error: "User profile not found. Please sign up first." };
     }
 
-    return { success: true, user: userCredential.user, role: userDoc.role };
+    const profile = {
+      id: userCredential.user.uid,
+      ...userDoc,
+      role: normalizeRole(userDoc.role),
+    };
+
+    saveAuthCache(profile);
+
+    return {
+      success: true,
+      user: userCredential.user,
+      role: profile.role,
+      profile,
+    };
   } catch (error) {
-    console.log("Firebase error code:", error.code);
-    console.log("Firebase error message:", error.message);
-    return { success: false, error: getAuthError(error.code) };
+    console.error("Login error:", error);
+
+    if (error?.code?.startsWith("auth/")) {
+      return { success: false, error: getAuthError(error.code) };
+    }
+
+    return {
+      success: false,
+      error: "Unable to load your account right now. Please try again.",
+    };
   }
 };
 
-// LOGOUT
 export const logoutUser = async () => {
   try {
     await signOut(auth);
+    clearAuthCache();
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
   }
 };
 
-// AUTH STATE LISTENER
 export const onAuthChange = (callback) => onAuthStateChanged(auth, callback);
 
-// HUMAN-READABLE ERROR MESSAGES - Firebase v10+ compatible
 const getAuthError = (code) => {
   const errors = {
     "auth/invalid-credential": "Incorrect email or password. Please try again.",
@@ -89,6 +123,6 @@ const getAuthError = (code) => {
     "auth/invalid-phone-number": "Please enter a valid phone number.",
     "auth/quota-exceeded": "SMS quota exceeded. Please try again later.",
   };
-  return errors[code] || "Something went wrong. Please try again.";
-};
 
+  return errors[code] || "Unable to log in right now. Please try again.";
+};

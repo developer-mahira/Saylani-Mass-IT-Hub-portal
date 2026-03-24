@@ -7,13 +7,11 @@ const STATUS_OPTIONS = ["Pending", "Matched", "Resolved", "Closed"];
 
 export default function AdminLostFound() {
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     const unsubscribe = getAllLostFoundItems((data) => {
       setItems(data);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -44,14 +42,6 @@ export default function AdminLostFound() {
   const getTypeColor = (type) => {
     return type === "Lost" ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800";
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-[#66b032] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

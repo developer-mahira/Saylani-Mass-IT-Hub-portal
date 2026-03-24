@@ -22,14 +22,12 @@ const NOTIFICATION_COLORS = {
 export default function NotificationFeed() {
   const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) return undefined;
 
     const unsubscribe = getUserNotifications(currentUser.uid, (data) => {
       setNotifications(data);
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -43,15 +41,7 @@ export default function NotificationFeed() {
     }
   };
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-10 h-10 border-4 border-green-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  const unreadCount = notifications.filter((item) => !item.isRead).length;
 
   return (
     <motion.div
@@ -91,15 +81,11 @@ export default function NotificationFeed() {
                       <h3 className={`font-semibold ${!notification.isRead ? "text-gray-900" : "text-gray-700"}`}>
                         {notification.title}
                       </h3>
-                      {!notification.isRead && (
-                        <span className="w-2 h-2 bg-green-primary rounded-full flex-shrink-0 mt-2" />
-                      )}
+                      {!notification.isRead && <span className="w-2 h-2 bg-green-primary rounded-full flex-shrink-0 mt-2" />}
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
                     <p className="text-xs text-gray-400 mt-2">
-                      {notification.createdAt?.toDate 
-                        ? notification.createdAt.toDate().toLocaleString() 
-                        : "Recently"}
+                      {notification.createdAt?.toDate ? notification.createdAt.toDate().toLocaleString() : "Recently"}
                     </p>
                   </div>
                 </div>
@@ -117,4 +103,3 @@ export default function NotificationFeed() {
     </motion.div>
   );
 }
-

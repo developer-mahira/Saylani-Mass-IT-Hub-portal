@@ -3,12 +3,17 @@ import { Facebook, Twitter, Instagram, Youtube, Mail, Phone, MapPin } from "luci
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const socialLinks = [
+    { label: "Facebook", href: "https://www.facebook.com/SaylaniMassITTraining", icon: Facebook },
+    { label: "Twitter", href: "https://x.com/saylaniwelfare", icon: Twitter },
+    { label: "Instagram", href: "https://www.instagram.com/saylanimassittraining", icon: Instagram },
+    { label: "YouTube", href: "https://www.youtube.com/@SaylaniMassITTraining", icon: Youtube },
+  ];
 
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid md:grid-cols-4 gap-8">
-          {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#66b032] to-[#0057a8] flex items-center justify-center text-white font-black text-sm">
@@ -20,38 +25,36 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-gray-400 text-sm mb-4 max-w-md">
-              Saylani Mass IT Training is Pakistan's largest free IT training program, 
-              committed to empowering youth with technical skills for a brighter future.
+              Saylani Mass IT Training is Pakistan&apos;s largest free IT training program, committed to empowering
+              youth with technical skills for a brighter future.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#66b032] transition-colors">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#66b032] transition-colors">
-                <Twitter size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#66b032] transition-colors">
-                <Instagram size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#66b032] transition-colors">
-                <Youtube size={18} />
-              </a>
+              {socialLinks.map(({ label, href, icon: Icon }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={label}
+                  className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-[#66b032] transition-colors"
+                >
+                  <Icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
             <h4 className="font-bold text-lg mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li><Link to="/" className="text-gray-400 hover:text-[#66b032] transition-colors">Home</Link></li>
-              <li><Link to="/#features" className="text-gray-400 hover:text-[#66b032] transition-colors">Features</Link></li>
-              <li><Link to="/#how-it-works" className="text-gray-400 hover:text-[#66b032] transition-colors">How It Works</Link></li>
+              <li><a href="/#features" className="text-gray-400 hover:text-[#66b032] transition-colors">Features</a></li>
+              <li><a href="/#how-it-works" className="text-gray-400 hover:text-[#66b032] transition-colors">How It Works</a></li>
               <li><Link to="/login" className="text-gray-400 hover:text-[#66b032] transition-colors">Login</Link></li>
               <li><Link to="/signup" className="text-gray-400 hover:text-[#66b032] transition-colors">Sign Up</Link></li>
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
             <h4 className="font-bold text-lg mb-4">Contact</h4>
             <ul className="space-y-3">
@@ -71,18 +74,30 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom */}
         <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2026 Saylani Mass IT Hub. All rights reserved. Created by Mahira Noor.
+            &copy; {currentYear} Saylani Mass IT Hub. All rights reserved. Created by Mahira Noor.
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
-            <a href="#" className="text-gray-400 hover:text-[#66b032] text-sm transition-colors">Privacy Policy</a>
-            <a href="#" className="text-gray-400 hover:text-[#66b032] text-sm transition-colors">Terms of Service</a>
+            <a
+              href="https://saylaniwelfare.com/en/privacy-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-400 hover:text-[#66b032] text-sm transition-colors"
+            >
+              Privacy Policy
+            </a>
+            <a
+              href="https://saylaniwelfare.com/en/terms-condition"
+              target="_blank"
+              rel="noreferrer"
+              className="text-gray-400 hover:text-[#66b032] text-sm transition-colors"
+            >
+              Terms of Service
+            </a>
           </div>
         </div>
       </div>
     </footer>
   );
 }
-

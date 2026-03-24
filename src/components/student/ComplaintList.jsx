@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FileText, AlertTriangle, Clock } from "lucide-react";
+import { FileText, Clock } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getUserComplaints } from "../../firebase/firestore";
 import StatusBadge from "../common/StatusBadge";
@@ -16,31 +16,19 @@ const PRIORITY_COLORS = {
 export default function ComplaintList() {
   const { currentUser } = useAuth();
   const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser) return undefined;
 
     const unsubscribe = getUserComplaints(currentUser.uid, (data) => {
       setComplaints(data);
-      setLoading(false);
     });
 
     return () => unsubscribe();
   }, [currentUser]);
 
-  const filteredComplaints = filter === "all"
-    ? complaints
-    : complaints.filter(c => c.status === filter);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-10 h-10 border-4 border-green-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
+  const filteredComplaints = filter === "all" ? complaints : complaints.filter((item) => item.status === filter);
 
   return (
     <motion.div
@@ -48,23 +36,19 @@ export default function ComplaintList() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold text-gray-900">My Complaints</h2>
           <p className="text-gray-500 text-sm">{complaints.length} total complaints</p>
         </div>
 
-        {/* Filter */}
         <div className="flex flex-wrap bg-gray-100 rounded-lg p-1 gap-1">
           {["all", "Submitted", "In Progress", "Resolved"].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
-                filter === status
-                  ? "bg-white text-green-primary shadow-sm"
-                  : "text-gray-500"
+                filter === status ? "bg-white text-green-primary shadow-sm" : "text-gray-500"
               }`}
             >
               {status === "all" ? "All" : status}
@@ -73,7 +57,6 @@ export default function ComplaintList() {
         </div>
       </div>
 
-      {/* Complaints List */}
       {filteredComplaints.length > 0 ? (
         <div className="space-y-4">
           {filteredComplaints.map((complaint) => (
@@ -87,7 +70,7 @@ export default function ComplaintList() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status={complaint.status} />
-                    <span className={`text-xs font-medium ${PRIORITY_COLORS[complaint.priority]}`}>
+                    <span className={`text-xs font-medium ${PRIORITY_COLORS[complaint.priority] || PRIORITY_COLORS.Low}`}>
                       {complaint.priority} Priority
                     </span>
                   </div>
@@ -119,12 +102,13 @@ export default function ComplaintList() {
         <EmptyState
           icon={FileText}
           title="No complaints found"
-          description={filter === "all"
-            ? "You haven't submitted any complaints yet."
-            : `You don't have any ${filter} complaints.`}
+          description={
+            filter === "all"
+              ? "You haven't submitted any complaints yet."
+              : `You don't have any ${filter} complaints.`
+          }
         />
       )}
     </motion.div>
   );
 }
-

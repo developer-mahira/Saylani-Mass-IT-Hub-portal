@@ -3,38 +3,51 @@ import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase/config";
 
-// Create context with default values
-const AuthContext = createContext({
-  currentUser: null,
-  userProfile: null,
-  userRole: null,
-  loading: true,
-  initialized: false,
-  isStudent: false,
-  isAdmin: false,
-});
+const AUTH_CACHE_KEY = "smit-hub-auth-cache";
 
-export const AuthProvider = ({ children }) => {
+const readCachedProfile = () => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.sessionStorage.getItem(AUTH_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedProfile = (profile) => {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(AUTH_CACHE_KEY, JSON.stringify(profile));
+};
+
+const clearCachedProfile = () => {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(AUTH_CACHE_KEY);
+};
+
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [userRole, setUserRole] = useState(null);
+  const [userProfile, setUserProfile] = useState(() => readCachedProfile());
+  const [userRole, setUserRole] = useState(() => readCachedProfile()?.role || null);
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
-  // Safety timeout to prevent infinite loading
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (loading) {
-        console.warn("Auth safety timeout triggered - forcing loading to false");
-        setLoading(false);
-        setInitialized(true);
-      }
-    }, 5000); // 5 second timeout
+  const normalizeRole = useCallback((role) => {
+    const safeRole = typeof role === "string" ? role.trim().toLowerCase() : "";
+    return safeRole === "admin" ? "admin" : "student";
+  }, []);
 
-    return () => clearTimeout(timeout);
-  }, [loading]);
+  const normalizeOptionalRole = useCallback((role) => {
+    if (typeof role !== "string") return null;
+    const safeRole = role.trim().toLowerCase();
+    if (safeRole === "admin") return "admin";
+    if (safeRole === "student") return "student";
+    return null;
+  }, []);
 
-  // Create default user document if it doesn't exist
   const createDefaultUserDoc = useCallback(async (uid, email) => {
     try {
       const defaultData = {
@@ -44,6 +57,7 @@ export const AuthProvider = ({ children }) => {
         createdAt: serverTimestamp(),
         isActive: true,
       };
+
       await setDoc(doc(db, "users", uid), defaultData);
       return defaultData;
     } catch (error) {
@@ -52,64 +66,74 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Fetch user role from Firestore
-  const fetchUserRole = useCallback(async (uid) => {
-    try {
-      console.log("Fetching user doc for:", uid);
-      const userDocRef = doc(db, "users", uid);
-      const userDocSnap = await getDoc(userDocRef);
-      
-      if (userDocSnap.exists()) {
-        const profileData = userDocSnap.data();
-        console.log("User doc found:", profileData);
-        return {
-          profile: { id: userDocSnap.id, ...profileData },
-          role: profileData.role || "student"
-        };
-      } else {
-        console.log("User doc does not exist - this might be causing the issue");
-        // Don't create automatically - just return null role
+  const fetchUserRole = useCallback(
+    async (uid, email = "") => {
+      try {
+        const userDocRef = doc(db, "users", uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()) {
+          const profileData = userDocSnap.data();
+          const normalizedRole = normalizeRole(profileData.role);
+          return {
+            profile: { id: userDocSnap.id, ...profileData, role: normalizedRole },
+            role: normalizedRole,
+          };
+        }
+
+        const defaultProfile = await createDefaultUserDoc(uid, email);
+        if (defaultProfile) {
+          return {
+            profile: { id: uid, ...defaultProfile, role: "student" },
+            role: "student",
+          };
+        }
+
+        return { profile: null, role: null };
+      } catch (error) {
+        console.error("Error fetching user role:", error);
         return { profile: null, role: null };
       }
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      return { profile: null, role: null };
-    }
-  }, []);
+    },
+    [createDefaultUserDoc, normalizeRole]
+  );
 
   useEffect(() => {
-    console.log("Setting up auth state listener");
-    
-    // Firebase auth state listener
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed:", user ? "User logged in" : "No user");
-      
-      if (user) {
-        // User is authenticated, fetch their role from Firestore
-        const { profile, role } = await fetchUserRole(user.uid);
-        setCurrentUser(user);
-        setUserProfile(profile);
-        setUserRole(role);
-        console.log("User profile set:", profile);
-        console.log("User role set:", role);
-      } else {
-        // No user authenticated
+      if (!user) {
+        clearCachedProfile();
         setCurrentUser(null);
         setUserProfile(null);
         setUserRole(null);
+        setLoading(false);
+        setInitialized(true);
+        return;
       }
-      
-      // ALWAYS set loading to false - this is critical!
-      console.log("Setting loading to false");
+
+      setCurrentUser(user);
+
+      const cachedProfile = readCachedProfile();
+      if (cachedProfile?.id === user.uid) {
+        setUserProfile(cachedProfile);
+        setUserRole(normalizeOptionalRole(cachedProfile.role));
+        setLoading(false);
+        setInitialized(true);
+      }
+
+      const { profile, role } = await fetchUserRole(user.uid, user.email);
+
+      if (profile) {
+        writeCachedProfile(profile);
+      }
+
+      setUserProfile(profile);
+      setUserRole(role);
       setLoading(false);
       setInitialized(true);
     });
 
-    return () => {
-      console.log("Cleaning up auth listener");
-      unsubscribe();
-    };
-  }, [fetchUserRole]);
+    return () => unsubscribe();
+  }, [fetchUserRole, normalizeOptionalRole]);
 
   const value = {
     currentUser,
@@ -121,23 +145,15 @@ export const AuthProvider = ({ children }) => {
     isAdmin: userRole === "admin",
   };
 
-  console.log("AuthContext render - loading:", loading, "initialized:", initialized);
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-// Custom hook to use auth context
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-};
+}
 
 export default AuthContext;
-

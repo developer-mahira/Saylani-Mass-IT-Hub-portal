@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import { 
   Home, FileText, Search, Users, UserCog, Bell, 
   LogOut, Menu, X
@@ -66,9 +65,8 @@ export default function AdminSidebar() {
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      <motion.aside
-        initial={false}
-        className={`fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-[#0057a8] to-[#003d73] text-white z-40 lg:translate-x-0 ${
+      <aside
+        className={`fixed left-0 top-0 h-full w-64 bg-gradient-to-b from-[#0057a8] to-[#003d73] text-white z-40 transition-transform duration-300 lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -119,7 +117,7 @@ export default function AdminSidebar() {
             </button>
           </div>
         </div>
-      </motion.aside>
+      </aside>
 
       {isOpen && (
         <div

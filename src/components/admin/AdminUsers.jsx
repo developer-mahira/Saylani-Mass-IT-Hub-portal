@@ -5,18 +5,14 @@ import { getAllUsersRealtime, updateUserDoc } from "../../firebase/firestore";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // Use the realtime version for proper unsubscribe support
     const unsubscribe = getAllUsersRealtime((data) => {
       setUsers(data);
-      setLoading(false);
     });
     
-    // Cleanup function
     return () => {
       if (unsubscribe && typeof unsubscribe === 'function') {
         unsubscribe();
@@ -47,14 +43,6 @@ export default function AdminUsers() {
       ? "bg-blue-100 text-blue-800" 
       : "bg-green-100 text-green-800";
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-[#66b032] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">

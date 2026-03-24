@@ -5,7 +5,6 @@ import { getAnnouncements, addAnnouncement } from "../../firebase/firestore";
 
 export default function AdminAnnouncements() {
   const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
@@ -16,7 +15,6 @@ export default function AdminAnnouncements() {
   useEffect(() => {
     const unsubscribe = getAnnouncements((data) => {
       setAnnouncements(data);
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -53,14 +51,6 @@ export default function AdminAnnouncements() {
     };
     return colors[priority] || colors.normal;
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-[#66b032] border-t-transparent rounded-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
