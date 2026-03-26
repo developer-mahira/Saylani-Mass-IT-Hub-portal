@@ -157,6 +157,13 @@ export default function SignupPage() {
             Login
           </Link>
         </p>
+
+        <button
+          onClick={() => navigate("/")}
+          className="block mx-auto mt-5 px-5 py-2 rounded-xl border border-[#0057a8] text-[#0057a8] font-semibold hover:bg-[#cfe6ff] transition-colors"
+        >
+          ← Back to Home
+        </button>
       </motion.div>
     </div>
   );
